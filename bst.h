@@ -20,7 +20,8 @@
 template <typename T>
 class BSTree {
 public:
-    BSTree();  // constructor
+    BSTree();                   // constructor
+    BSTree(const BSTree<T> &);  // copy constructor
     ~BSTree(); // deconstuctor, calls makeEmpty() which deallocates all memory
 
     // insert object into the tree, parameter holds pointer to object to insert
@@ -29,9 +30,16 @@ public:
     // retrieve object, first parameter is object to retrieve
     // second parameter holds pointer to found object, nullptr if not found
     bool retrieve(const T&, T*&) const;
-    void display() const;            //displays the contents of a tree to cout
-    void makeEmpty();                //empties the current tree, deallocates all memory
-    bool isEmpty() const;            //returns true if tree is empty
+    int count();                // count total node
+    int countUp(int);           // count the node up level
+    int countDown(int);         // count the node down level
+    int maxDepth();             // max depth of the tree
+    T getMin() const;           // get min value
+    T getMax() const;           // get max value
+    bool isSameTree(BSTree<T>); // check if other tree is identical this tree
+    void display() const;       // displays the contents of a tree to cout
+    void makeEmpty();           // empties the current tree, deallocates all memory
+    bool isEmpty() const;       // returns true if tree is empty
 
 private:
 
@@ -40,7 +48,9 @@ private:
         Node* right;
         Node* left;
     };
-    Node* root;                      // root of the tree
+    Node* root;                     // root of the tree
+
+    void copy(Node *&, Node*);       // use to copy other tree
 
     // use for traverse the tree to add node
     // first parameter is new node, second is for traversing
@@ -58,6 +68,31 @@ private:
     // use for treverse the tree to coud
     void displayHelper(Node *) const;
 
+    // count total number of node
+    int countHelper(Node*);
+
+    // use for count up
+    // first parameter is node
+    // second parameter is level
+    // third parameter is n
+    int countUpHelper(Node *, int, int);
+
+    // use for count down
+    // first parameter is node
+    // second parameter is level
+    int countDownHelper(Node *, int);
+
+    // get the longest length of tree
+    int maxDeepHelper(Node *);
+
+    // get minimum value of tree
+    T getMinHelper(Node*) const;
+
+    // get maximum value of tree
+    T getMaxHelper(Node*) const;
+
+    // check if two tree are identical
+    bool sameTreeHelper(Node*, Node*) const;
 };
 
 // constructor
@@ -65,6 +100,32 @@ private:
 template<typename T>
 BSTree<T>::BSTree() {
     root = nullptr;
+}
+
+// copy constructor
+// copy other tree into this tree
+template<typename T>
+BSTree<T>::BSTree(const BSTree<T> &other) {
+
+    // early exit
+    if (other.root == nullptr)
+        root = nullptr;
+    else
+        copy(root, other.root);
+}
+
+// copy
+// recursively traverse the other tree
+// this function will be call in copy constructor
+template<typename T>
+void BSTree<T>::copy(Node *& current, Node * other) {
+    if (other == nullptr)
+        return;
+    else {
+        current = new Node{ new T(*other->data), nullptr, nullptr };
+        copy(current->left, other->left);
+        copy(current->right, other->right);
+    }
 }
 
 // deconstructor
@@ -134,6 +195,24 @@ bool BSTree<T>::retrieve(const T & target, T *& ptr) const {
     return retrieveHelper(target, ptr, root);
 }
 
+// count
+// count total number of node in tree
+template<typename T>
+int BSTree<T>::count() {
+    return countHelper(root);
+}
+
+// countHelper
+// recursively traverse the tree
+template<typename T>
+int BSTree<T>::countHelper(Node * current) {
+    if (current == nullptr)
+        return 0;
+    return countHelper(current->left)
+         + countHelper(current->right)
+         + 1;
+}
+
 // retrieveHelper
 // recursively traverse the tree
 // this function is sub-function of retrieve
@@ -163,6 +242,7 @@ bool BSTree<T>::retrieveHelper(const T & target, T *& retriever, Node * current)
     }
 }
 
+
 // display
 // display the node of tree from left to right, by acessding order
 // call the displayHelper to perform traverse recursively
@@ -189,6 +269,156 @@ void BSTree<T>::displayHelper(Node * current) const {
         std::cout << *current->data << std::endl;
         displayHelper(current->right);
     }
+}
+
+// countUp
+// count how many node at level n
+// root is level 0
+template<typename T>
+int BSTree<T>::countUp(int n) {
+    int level = 0;
+    return countUpHelper(root, level, n);
+}
+
+// countUpHelper
+// recursively count up
+// this function is sub-function of count up
+template<typename T>
+int BSTree<T>::countUpHelper(Node * current, int level, int n) {
+    if (current == NULL)
+        return 0;
+    if (level == n)
+        return 1;
+    level++;
+    return countUpHelper(current->left, level, n)
+         + countUpHelper(current->right, level, n);
+    return 0;
+}
+
+// countDown
+// count how many node at level n
+// root is level 0
+template<typename T>
+int BSTree<T>::countDown(int n) {
+    return countDownHelper(root, n);
+}
+
+// countDownHelper
+// recursively count up
+// this function is sub-function of count down
+template<typename T>
+int BSTree<T>::countDownHelper(Node * current, int n) {
+    if (current == NULL)
+        return 0;
+    if (n == 0)
+        return 1;
+    return countDownHelper(current->left, n - 1)
+         + countDownHelper(current->right, n - 1);
+}
+
+// maxDepth
+// the longest path from the root node down to the farthest leaf node
+// at root is level 0
+template<typename T>
+int BSTree<T>::maxDepth() {
+
+    if (root == nullptr)
+        return 0;
+    else
+        return maxDeepHelper(root) - 1; // count from 0
+}
+
+// maxDeepHelper
+// recursively traverse the tree
+// this function will be called in maxDepth
+template<typename T>
+int BSTree<T>::maxDeepHelper(Node * current) {
+    
+    // base case
+    if (current == nullptr) {
+        return 0;
+    }
+
+    // traversing
+    else {
+
+        // compute the depth of each subtree
+        int lDepth = maxDeepHelper(current->left);
+        int rDepth = maxDeepHelper(current->right);
+
+        // use the larger one
+        if (lDepth > rDepth)
+            return (lDepth + 1);
+        else
+            return (rDepth + 1);
+    }
+}   
+
+// getMin
+// return minimum value of tree
+template<typename T>
+T BSTree<T>::getMin() const {
+    if (root == nullptr)
+        return *root->data;
+    return getMinHelper(root);
+}
+
+// getMinHelper
+// recursively traverse the left-sub tree
+// this function will be called in getMin
+template<typename T>
+T BSTree<T>::getMinHelper(Node * current) const {
+    if (current->left == nullptr)
+        return *current->data;
+    else
+        return getMinHelper(current->left);
+}
+
+// getMax
+// return maximum value of tree
+template<typename T>
+T BSTree<T>::getMax() const {
+    if (root == nullptr)
+        return *root->data;
+    return getMaxHelper(root);
+}
+
+// getMaxHelper
+// recursively traverse the right-sub tree
+// this function will be called in getMax
+template<typename T>
+T BSTree<T>::getMaxHelper(Node * current) const {
+    if (current->left == nullptr)
+        return *current->data;
+    else
+        return getMaxHelper(current->right);
+}
+
+// sameTree
+// two identical tree mush have same structure and value
+template<typename T>
+bool BSTree<T>::isSameTree(BSTree<T> other) {
+
+    // early exit if not
+    if (root != other.root)
+        return false;
+    else
+        return sameTreeHelper(root, other.root);
+}
+
+// sameTreeHelper
+// recursively compare each left-sub, right-sub tree
+// this function will be called in sameTree
+template<typename T>
+bool BSTree<T>::sameTreeHelper(Node * thisTree, Node * otherTree) const {
+    if (thisTree == nullptr && otherTree == nullptr)
+        return true;
+    if (thisTree == nullptr || otherTree == nullptr)
+        return false;
+    else
+        return thisTree == otherTree
+        && sameTreeHelper(thisTree->left, otherTree->left)
+        && sameTreeHelper(thisTree->right, otherTree->right);
 }
 
 // makeEmpty
@@ -229,5 +459,4 @@ template<typename T>
 bool BSTree<T>::isEmpty() const {
     return root == nullptr;
 }
-
 #endif // !BINARY_SEARCH_TREE

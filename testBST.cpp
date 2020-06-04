@@ -49,9 +49,23 @@ int main() {
     assert(tree.insert(new int(20)));
     assert(tree.insert(new int(5)));
     assert(tree.insert(new int(35)));
+    assert(tree.insert(new int(40)));
+    assert(tree.insert(new int(45)));
+    assert(tree.insert(new int(50)));
     assert(!tree.isEmpty());
     tree.display();
+    cout << "Max depth:" << tree.maxDepth() << endl;
+    cout << "Max node:" << tree.getMax() << endl;
+    cout << "Min node:" << tree.getMin() << endl;
+    cout << "Total node:" << tree.count() << endl;
+    int n = 1;
+    cout << "Count up " << n << ":" << tree.countUp(n) << endl;
+    cout << "Count down " << n << ":" << tree.countUp(n) << endl;
 
+    // test copy constructor
+    BSTree<int> copyTree(tree);
+    copyTree.display();
+    cout << "Copy constructor: PASSED" << endl;
     // test deconstructor when end program
 
     return 0;
